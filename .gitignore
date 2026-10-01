@@ -25,3 +25,5 @@ htmlcov/
 
 # uv
 uv.lock.bak
+# Private development planning
+docs/superpowers/plans/

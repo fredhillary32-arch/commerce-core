@@ -3,6 +3,18 @@ import pytest
 from app.core.config import Settings
 
 
+@pytest.fixture(autouse=True)
+def required_settings(monkeypatch):
+    """The values Settings declares without a default.
+
+    Each test below omits at most one of them deliberately; supplying them
+    here keeps every other test failing for the reason it is actually about.
+    """
+    monkeypatch.setenv("JWT_SECRET_KEY", "a-test-signing-key-of-sufficient-length")
+    monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.test")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "a-test-service-role-key")
+
+
 def test_settings_load_from_env(monkeypatch):
     monkeypatch.setenv("APP_NAME", "test-app")
     monkeypatch.setenv("APP_ENV", "test")
@@ -55,6 +67,23 @@ def test_settings_rejects_ecommerce_database_url(monkeypatch):
     )
 
     with pytest.raises(ValueError, match="ecommerce"):
+        Settings(_env_file=None)
+
+
+def test_settings_require_a_jwt_signing_key(monkeypatch):
+    monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
+
+    with pytest.raises(ValueError, match="jwt_secret_key"):
+        Settings(_env_file=None)
+
+
+def test_settings_require_supabase_credentials(monkeypatch):
+    """Phase 3 gives the storage credentials the same treatment as the
+    signing key: no default, so a misconfigured install fails at startup
+    rather than on the first image upload."""
+    monkeypatch.delenv("SUPABASE_SERVICE_KEY", raising=False)
+
+    with pytest.raises(ValueError, match="supabase_service_key"):
         Settings(_env_file=None)
 
 

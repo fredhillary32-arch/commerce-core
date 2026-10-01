@@ -34,3 +34,23 @@ def test_json_formatter_produces_structured_output():
     assert payload["level"] == "INFO"
     assert payload["logger"] == "app.test"
     assert "timestamp" in payload
+
+
+def test_json_formatter_redacts_sensitive_extra_fields():
+    formatter = JSONFormatter()
+    record = logging.LogRecord(
+        name="app.test",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="user login",
+        args=(),
+        exc_info=None,
+    )
+    record.password = "hunter2"
+    record.request_id = "abc-123"
+
+    payload = json.loads(formatter.format(record))
+
+    assert payload["password"] == "***REDACTED***"
+    assert payload["request_id"] == "abc-123"

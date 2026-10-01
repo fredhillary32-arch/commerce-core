@@ -1,23 +1,26 @@
 [project]
 name = "commerce-platform-api"
 version = "0.1.0"
-description = "Commerce platform API - Phase 1 foundation (FastAPI + PostgreSQL)"
+description = "Commerce platform API - foundation, authentication and RBAC (FastAPI + PostgreSQL)"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.13",
+    "argon2-cffi>=23.1",
+    "email-validator>=2.2",
     "fastapi>=0.115",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
+    "pyjwt>=2.9",
     "sqlalchemy>=2.0",
+    "supabase>=2.9",
     "uvicorn[standard]>=0.32",
 ]
 
 [dependency-groups]
 dev = [
     "httpx>=0.27",
-    "httpx2>=2.13.0",
     "pytest>=8.3",
 ]
 

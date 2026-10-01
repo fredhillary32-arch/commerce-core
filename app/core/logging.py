@@ -5,12 +5,12 @@ from datetime import datetime, timezone
 
 from app.core.config import get_settings
 
-# Fields carried on every record besides the ones we always emit. A future
-# request/correlation ID middleware can attach more of these via `extra=`
-# without needing any change here.
-_EXTRA_RECORD_ATTRS = ("request_id",)
+# Attributes every LogRecord carries by default. Anything else found on a
+# record came from a caller's `extra=` (e.g. a future request/correlation ID
+# middleware) and should be included in the JSON payload.
+_STANDARD_RECORD_ATTRS = frozenset(logging.LogRecord("", 0, "", 0, "", None, None).__dict__) | {"message"}
 
-# Never log these, even if a caller accidentally passes them as `extra`.
+# Never log these, whether they appear as an `extra=` field or elsewhere.
 _REDACTED_KEYS = {
     "password",
     "password_hash",
@@ -31,19 +31,18 @@ class JSONFormatter(logging.Formatter):
             "message": record.getMessage(),
         }
 
-        for attr in _EXTRA_RECORD_ATTRS:
-            value = getattr(record, attr, None)
-            if value is not None:
-                payload[attr] = value
+        for key, value in record.__dict__.items():
+            if key not in _STANDARD_RECORD_ATTRS:
+                payload[key] = value
 
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
 
-        for key in list(payload):
+        for key in payload:
             if key.lower() in _REDACTED_KEYS:
                 payload[key] = "***REDACTED***"
 
-        return json.dumps(payload)
+        return json.dumps(payload, default=str)
 
 
 def configure_logging() -> None:
